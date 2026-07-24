@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.atigger.status.data.ServerUiModel
 import com.atigger.status.i18n.AppStrings
+import kotlin.math.absoluteValue
 
 private val CpuGreen = Color(0xFF1B8A5A)
 private val CpuYellow = Color(0xFFE6A817)
