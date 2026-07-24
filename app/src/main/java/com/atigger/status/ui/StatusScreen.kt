@@ -1197,7 +1197,7 @@ private fun ServerCard(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        onClick = if (hasDetails) { { expanded = !expanded } } else null
+        onClick = hasDetails.takeIf { it }?.let { { expanded = !expanded } }
     ) {
         Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
             // Compact header: name + status + follow in single row
