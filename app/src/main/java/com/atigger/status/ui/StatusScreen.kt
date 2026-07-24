@@ -176,7 +176,7 @@ fun StatusScreen(
         return
     }
 
-    var showOnlineOnly by rememberSaveable { mutableStateOf(false) }
+    var showOnlineOnly by rememberSaveable { mutableStateOf(true) }
     var selectedGroupId by rememberSaveable { mutableStateOf<Int?>(null) }
     val favoriteServer = (uiState as? StatusUiState.Success)
         ?.servers
@@ -223,7 +223,7 @@ fun StatusScreen(
                         FilterChip(
                             selected = showOnlineOnly,
                             onClick = { showOnlineOnly = !showOnlineOnly },
-                            label = { Text(strings.online) },
+                            label = { Text(if (showOnlineOnly) strings.online else strings.showAll) },
                             colors = FilterChipDefaults.filterChipColors()
                         )
                         IconButton(onClick = onRetry) {
@@ -968,13 +968,19 @@ private fun ServerListPane(
     val visibleServers = selectedGroupId
         ?.let { groupId -> servers.filter { groupId in it.groupIds } }
         ?: servers
+    // Exclude followed nodes from main node list (mutual exclusion)
+    val displayedServers = if (selectedGroupId == null) {
+        visibleServers.filter { it.id != favoriteServerId }
+    } else {
+        visibleServers
+    }
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(innerPadding),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        contentPadding = PaddingValues(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         if (selectedGroupId == null) {
             item {
@@ -989,12 +995,12 @@ private fun ServerListPane(
         }
         item {
             Text(
-                text = strings.nodes(visibleServers.size),
+                text = strings.nodes(displayedServers.size),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        if (visibleServers.isEmpty()) {
+        if (displayedServers.isEmpty()) {
             item {
                 Card(
                     shape = RoundedCornerShape(20.dp),
@@ -1002,12 +1008,12 @@ private fun ServerListPane(
                         containerColor = MaterialTheme.colorScheme.surfaceContainer
                     )
                 ) {
-                    Column(modifier = Modifier.padding(18.dp)) {
+                    Column(modifier = Modifier.padding(14.dp)) {
                         Text(
                             text = strings.noNodes,
                             style = MaterialTheme.typography.bodyLarge
                         )
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
                         Button(onClick = onRetry) {
                             Text(strings.reconnect)
                         }
@@ -1019,7 +1025,7 @@ private fun ServerListPane(
                 selectedGroupId == null || selectedGroupId == group.id
             }
             visibleGroups.forEach { group ->
-                val groupServers = visibleServers.filter { server -> group.id in server.groupIds }
+                val groupServers = displayedServers.filter { server -> group.id in server.groupIds }
                 if (groupServers.isNotEmpty()) {
                     item(key = "group-${group.id}") {
                         GroupHeader(group.name)
@@ -1035,7 +1041,7 @@ private fun ServerListPane(
                 }
             }
 
-            val ungroupedServers = visibleServers.filter { it.groupIds.isEmpty() }
+            val ungroupedServers = displayedServers.filter { it.groupIds.isEmpty() }
             if (selectedGroupId == null && ungroupedServers.isNotEmpty()) {
                 item(key = "group-ungrouped") {
                     GroupHeader(strings.ungrouped)
@@ -1050,7 +1056,7 @@ private fun ServerListPane(
                 }
             }
         } else {
-            items(visibleServers, key = { it.id }) { server ->
+            items(displayedServers, key = { it.id }) { server ->
                 ServerCard(
                     server = server,
                     isFavorite = favoriteServerId == server.id,
@@ -1069,7 +1075,7 @@ private fun GroupHeader(title: String) {
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)
+        modifier = Modifier.padding(top = 2.dp, bottom = 0.dp)
     )
 }
 
@@ -1082,55 +1088,61 @@ private fun LiveUpdateCard(
     strings: AppStrings
 ) {
     Card(
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         )
     ) {
-        Column(modifier = Modifier.padding(18.dp)) {
+        Column(modifier = Modifier.padding(14.dp)) {
             Text(
                 text = strings.followedNode,
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             if (favoriteServer != null) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = favoriteServer.name,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (favoriteServer.isOnline) Color(0xFF1B8A5A)
+                                        else Color(0xFFB3261E)
+                                    )
+                            )
+                            Text(
+                                text = favoriteServer.name,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = strings.updated(lastUpdated),
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    Column(horizontalAlignment = Alignment.End) {
-                        StatusBadge(
-                            favoriteServer.isOnline,
-                            if (favoriteServer.isOnline) strings.onlineStatus else strings.offlineStatus
-                        )
-                        TextButton(onClick = { onToggleFavorite(favoriteServer.id) }) {
-                            Text(strings.unfollow)
-                        }
+                    TextButton(
+                        onClick = { onToggleFavorite(favoriteServer.id) },
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                    ) {
+                        Text(strings.unfollow, style = MaterialTheme.typography.labelMedium)
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
-                InfoLine(strings.cpu, favoriteServer.cpuLine)
-                InfoLine(strings.usage, favoriteServer.usageLine)
-                InfoLine(strings.network, favoriteServer.networkLine)
-                InfoLine(strings.traffic, favoriteServer.trafficLine)
-                favoriteServer.uptimeLine?.let { InfoLine(strings.uptime, it) }
-                favoriteServer.ipLine?.let { InfoLine(strings.ip, it) }
+                Spacer(modifier = Modifier.height(8.dp))
+                ServerMetricsDashboard(server = favoriteServer, strings = strings)
             } else {
                 Text(
                     text = if (favoriteServerId == null) strings.followHint else strings.followMissingHint,
@@ -1175,62 +1187,119 @@ private fun ServerCard(
     onToggleFavorite: (Int) -> Unit,
     strings: AppStrings
 ) {
+    var expanded by rememberSaveable(server.id) { mutableStateOf(false) }
+    val hasDetails = server.planLine != null || server.billingLine != null ||
+            server.ipLine != null || server.uptimeLine != null
+
     Card(
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        onClick = if (hasDetails) { { expanded = !expanded } } else null
     ) {
-        Column(modifier = Modifier.padding(18.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
+            // Compact header: name + status + follow in single row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        // Online indicator dot
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (server.isOnline) Color(0xFF1B8A5A)
+                                    else Color(0xFFB3261E)
+                                )
+                        )
+                        Text(
+                            text = server.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                     Text(
-                        text = server.name,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
+                        text = server.platformLine,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                }
+                // Follow button (compact)
+                TextButton(
+                    onClick = { onToggleFavorite(server.id) },
+                    modifier = Modifier.height(32.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                ) {
                     Text(
-                        text = server.platformLine,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = if (isFavorite) strings.followed else strings.follow,
+                        style = MaterialTheme.typography.labelMedium
                     )
                 }
-                Column(horizontalAlignment = Alignment.End) {
-                    StatusBadge(
-                        server.isOnline,
-                        if (server.isOnline) strings.onlineStatus else strings.offlineStatus
-                    )
-                    TextButton(onClick = { onToggleFavorite(server.id) }) {
-                        Text(if (isFavorite) strings.followed else strings.follow)
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Metrics dashboard with charts
+            ServerMetricsDashboard(server = server, strings = strings)
+
+            // Expandable detail section
+            if (expanded && hasDetails) {
+                Spacer(modifier = Modifier.height(8.dp))
+                server.planLine?.let { CompactInfoLine(strings.plan, it) }
+                server.billingLine?.let { CompactInfoLine(strings.billing, it) }
+                server.ipLine?.let { CompactInfoLine(strings.ip, it) }
+                server.uptimeLine?.let { CompactInfoLine(strings.uptime, it) }
+            }
+
+            // Tags row (always visible)
+            val tags = listOfNotNull(
+                server.locationTag,
+                server.versionTag?.let { strings.agentVersion(it) }
+            )
+            if (tags.isNotEmpty() || (hasDetails && !expanded)) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    tags.forEach { TagChip(it) }
+                    // Show expand hint if there are hidden details
+                    if (hasDetails && !expanded) {
+                        Text(
+                            text = "...",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(14.dp))
-            InfoLine(strings.cpu, server.cpuLine)
-            InfoLine(strings.usage, server.usageLine)
-            InfoLine(strings.network, server.networkLine)
-            InfoLine(strings.traffic, server.trafficLine)
-            InfoLine(strings.connectionLabel, server.connectionLine)
-            server.planLine?.let { InfoLine(strings.plan, it) }
-            server.billingLine?.let { InfoLine(strings.billing, it) }
-            server.ipLine?.let { InfoLine(strings.ip, it) }
-            server.uptimeLine?.let { InfoLine(strings.uptime, it) }
-
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                server.locationTag?.let { TagChip(it) }
-                server.versionTag?.let { TagChip(strings.agentVersion(it)) }
-            }
         }
+    }
+}
+
+@Composable
+private fun CompactInfoLine(label: String, value: String) {
+    Row(modifier = Modifier.padding(top = 3.dp)) {
+        Text(
+            text = "$label: ",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurface
+        )
     }
 }
 

@@ -175,7 +175,28 @@ data class ServerUiModel(
     val ipLine: String?,
     val uptimeLine: String?,
     val locationTag: String?,
-    val versionTag: String?
+    val versionTag: String?,
+    // Raw numeric values for charts
+    val cpuPercent: Float?,
+    val memoryPercent: Float?,
+    val diskPercent: Float?,
+    val swapPercent: Float?,
+    val memoryUsed: Long?,
+    val memoryTotal: Long?,
+    val diskUsed: Long?,
+    val diskTotal: Long?,
+    val netInSpeed: Long?,
+    val netOutSpeed: Long?,
+    val netInSpeedText: String?,
+    val netOutSpeedText: String?,
+    val netInTransfer: Long?,
+    val netOutTransfer: Long?,
+    val load1: Double?,
+    val load5: Double?,
+    val load15: Double?,
+    val tcpConnCount: Int?,
+    val udpConnCount: Int?,
+    val processCount: Int?
 )
 
 data class ServerGroupUiModel(
@@ -247,6 +268,11 @@ fun ServerDto.toUiModel(
     val ips = listOfNotNull(geoip.ip.ipv4Addr, geoip.ip.ipv6Addr)
     val ipLine = ips.takeIf { it.isNotEmpty() }?.joinToString("  ")
 
+    val cpuPct = state.cpu?.let { it.toFloat() }
+    val memPct = memUsedPercent(state.memUsed, host.memTotal)
+    val diskPct = memUsedPercent(state.diskUsed, host.diskTotal)
+    val swapPct = memUsedPercent(state.swapUsed, host.swapTotal)
+
     return ServerUiModel(
         id = id,
         name = name,
@@ -271,7 +297,27 @@ fun ServerDto.toUiModel(
         locationTag = note.customData?.location
             ?: countryCode?.uppercase(Locale.getDefault())
             ?: geoip.countryCode?.uppercase(Locale.getDefault()),
-        versionTag = host.version
+        versionTag = host.version,
+        cpuPercent = cpuPct,
+        memoryPercent = memPct,
+        diskPercent = diskPct,
+        swapPercent = swapPct,
+        memoryUsed = state.memUsed,
+        memoryTotal = host.memTotal,
+        diskUsed = state.diskUsed,
+        diskTotal = host.diskTotal,
+        netInSpeed = state.netInSpeed,
+        netOutSpeed = state.netOutSpeed,
+        netInSpeedText = state.netInSpeed?.let { "${formatBytes(it)}/s" },
+        netOutSpeedText = state.netOutSpeed?.let { "${formatBytes(it)}/s" },
+        netInTransfer = state.netInTransfer,
+        netOutTransfer = state.netOutTransfer,
+        load1 = state.load1,
+        load5 = state.load5,
+        load15 = state.load15,
+        tcpConnCount = state.tcpConnCount,
+        udpConnCount = state.udpConnCount,
+        processCount = state.processCount
     )
 }
 
@@ -333,6 +379,11 @@ private fun formatUsagePercent(used: Long?, total: Long?): String? {
     if (used == null || total == null || total <= 0) return null
     val percent = used.toDouble() / total.toDouble() * 100.0
     return "${formatPercent(percent)}%"
+}
+
+private fun memUsedPercent(used: Long?, total: Long?): Float? {
+    if (used == null || total == null || total <= 0) return null
+    return (used.toFloat() / total.toFloat() * 100f)
 }
 
 private fun formatBytes(value: Long): String {

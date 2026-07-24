@@ -9,6 +9,7 @@ class AppStrings private constructor(
     fun updated(value: String) = text("\u6700\u8fd1\u66f4\u65b0 $value", "Updated $value")
     val settings = text("\u8bbe\u7f6e", "Settings")
     val online = text("\u4ec5\u5728\u7ebf", "Online")
+    val showAll = text("\u663e\u793a\u5168\u90e8", "Show All")
     val allGroups = text("\u5168\u90e8", "All")
     val groups = text("\u5206\u7ec4", "Groups")
     val ungrouped = text("\u672a\u5206\u7ec4", "Ungrouped")
