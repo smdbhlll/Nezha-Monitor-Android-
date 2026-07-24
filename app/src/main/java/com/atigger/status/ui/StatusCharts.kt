@@ -58,13 +58,26 @@ fun chartTrackColor(): Color {
     return if (isSystemInDarkTheme()) DarkTrack else LightTrack
 }
 
-/** Ultra-compact CPU ring gauge (36dp, only percent inside, label outside) */
+private fun formatBytes(value: Long): String {
+    val units = listOf("B", "KB", "MB", "GB", "TB", "PB")
+    var display = value.toDouble().absoluteValue
+    var unitIndex = 0
+    while (display >= 1024 && unitIndex < units.lastIndex) {
+        display /= 1024.0
+        unitIndex += 1
+    }
+    val sign = if (value < 0) "-" else ""
+    val pattern = if (display >= 100 || unitIndex == 0) "%.0f" else "%.1f"
+    return sign + pattern.format(display) + units[unitIndex]
+}
+
+/** Ultra-compact CPU ring gauge (42dp, only percent inside, label outside) */
 @Composable
 fun CpuRing(
     percent: Float,
     modifier: Modifier = Modifier,
-    size: Dp = 38.dp,
-    strokeWidth: Dp = 3.dp
+    size: Dp = 42.dp,
+    strokeWidth: Dp = 4.dp
 ) {
     val color = usageColor(percent)
     val bgTrack = chartTrackColor()
@@ -87,20 +100,20 @@ fun CpuRing(
         }
         Text(
             text = "${percent.toInt()}",
-            fontSize = 10.sp,
+            fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
         )
     }
 }
 
-/** Ultra-compact progress bar: [label%] [====bar====] */
+/** Compact progress bar: [label%] [====bar====] */
 @Composable
 fun CompactBar(
     percent: Float,
     label: String,
     modifier: Modifier = Modifier,
-    height: Dp = 5.dp,
+    height: Dp = 6.dp,
     barColor: Color? = null
 ) {
     val color = barColor ?: usageColor(percent)
@@ -116,7 +129,7 @@ fun CompactBar(
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
-            modifier = Modifier.width(54.dp)
+            modifier = Modifier.width(58.dp)
         )
         Box(modifier = Modifier.weight(1f).padding(start = 2.dp, end = 2.dp)) {
             Canvas(
@@ -136,7 +149,7 @@ fun CompactBar(
     }
 }
 
-/** Single-line network + load text, ultra compact */
+/** Single-line network speed + load, compact */
 @Composable
 fun NetworkLoadLine(
     downSpeed: String?,
@@ -157,8 +170,8 @@ fun NetworkLoadLine(
     if (parts.isEmpty()) return
 
     Text(
-        text = parts.joinToString("  "),
-        style = MaterialTheme.typography.labelSmall,
+        text = parts.joinToString("   "),
+        style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurface,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
@@ -166,7 +179,30 @@ fun NetworkLoadLine(
     )
 }
 
-/** Combined metrics: single compact column */
+/** Single-line total traffic display */
+@Composable
+fun TrafficTotalLine(
+    totalIn: Long?,
+    totalOut: Long?,
+    modifier: Modifier = Modifier
+) {
+    val parts = buildList {
+        totalIn?.let { add("\u21e3${formatBytes(it)}") }
+        totalOut?.let { add("\u21e1${formatBytes(it)}") }
+    }
+    if (parts.isEmpty()) return
+
+    Text(
+        text = parts.joinToString("   "),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier.fillMaxWidth()
+    )
+}
+
+/** Combined metrics: three compact rows */
 @Composable
 fun ServerMetricsDashboard(
     server: ServerUiModel,
@@ -185,28 +221,27 @@ fun ServerMetricsDashboard(
             if (server.cpuPercent != null) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.width(44.dp)
+                    modifier = Modifier.width(50.dp)
                 ) {
-                    CpuRing(percent = server.cpuPercent, size = 36.dp, strokeWidth = 3.dp)
+                    CpuRing(percent = server.cpuPercent, size = 42.dp, strokeWidth = 4.dp)
                     Text(
                         text = strings.cpu,
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 9.sp
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
             // RAM + DSK bars stacked
             Column(
-                modifier = Modifier.weight(1f).padding(start = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                modifier = Modifier.weight(1f).padding(start = 6.dp),
+                verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
                 if (server.memoryPercent != null) {
                     CompactBar(
                         percent = server.memoryPercent,
                         label = "RAM",
-                        height = 5.dp,
+                        height = 6.dp,
                         barColor = MemoryBlue
                     )
                 }
@@ -214,28 +249,33 @@ fun ServerMetricsDashboard(
                     CompactBar(
                         percent = server.diskPercent,
                         label = "DSK",
-                        height = 5.dp,
+                        height = 6.dp,
                         barColor = DiskPurple
                     )
                 }
-                // If no RAM/DSK, show swap if available
                 if (server.memoryPercent == null && server.diskPercent == null && server.swapPercent != null) {
                     CompactBar(
                         percent = server.swapPercent,
                         label = "SWP",
-                        height = 5.dp
+                        height = 6.dp
                     )
                 }
             }
         }
 
-        // Row 2: Network speeds + load in single text line
+        // Row 2: Network speeds + load
         NetworkLoadLine(
             downSpeed = server.netInSpeedText,
             upSpeed = server.netOutSpeedText,
             load1 = server.load1,
             load5 = server.load5,
             load15 = server.load15
+        )
+
+        // Row 3: Total traffic (in/out cumulative)
+        TrafficTotalLine(
+            totalIn = server.netInTransfer,
+            totalOut = server.netOutTransfer
         )
     }
 }

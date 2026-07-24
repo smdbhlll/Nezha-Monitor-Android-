@@ -1094,7 +1094,7 @@ private fun LiveUpdateCard(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         )
     ) {
-        Column(modifier = Modifier.padding(10.dp)) {
+        Column(modifier = Modifier.padding(12.dp)) {
             Text(
                 text = strings.followedNode,
                 style = MaterialTheme.typography.labelSmall,
@@ -1194,7 +1194,7 @@ private fun ServerCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         onClick = if (hasDetails) ({ expanded = !expanded }) else ({})
     ) {
-        Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
             // Ultra-compact header: name + dot + follow in single line
             Row(
                 modifier = Modifier.fillMaxWidth(),
