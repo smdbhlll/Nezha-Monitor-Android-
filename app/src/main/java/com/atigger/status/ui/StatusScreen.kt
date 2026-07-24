@@ -1191,13 +1191,19 @@ private fun ServerCard(
     val hasDetails = server.planLine != null || server.billingLine != null ||
             server.ipLine != null || server.uptimeLine != null
 
+    val onClickCard: (() -> Unit)? = if (hasDetails) {
+        { expanded = !expanded }
+    } else {
+        null
+    }
+
     Card(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        onClick = hasDetails.takeIf { it }?.let { { expanded = !expanded } }
+        onClick = onClickCard
     ) {
         Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
             // Compact header: name + status + follow in single row
