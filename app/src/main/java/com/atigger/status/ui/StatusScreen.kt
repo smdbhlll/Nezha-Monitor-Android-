@@ -979,8 +979,8 @@ private fun ServerListPane(
         modifier = Modifier
             .fillMaxSize()
             .padding(innerPadding),
-        contentPadding = PaddingValues(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         if (selectedGroupId == null) {
             item {
@@ -1093,60 +1093,54 @@ private fun LiveUpdateCard(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         )
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(10.dp)) {
             Text(
                 text = strings.followedNode,
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(2.dp))
             if (favoriteServer != null) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(6.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        if (favoriteServer.isOnline) Color(0xFF1B8A5A)
-                                        else Color(0xFFB3261E)
-                                    )
-                            )
-                            Text(
-                                text = favoriteServer.name,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(2.dp))
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(5.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (favoriteServer.isOnline) Color(0xFF1B8A5A)
+                                    else Color(0xFFB3261E)
+                                )
+                        )
+                        Spacer(modifier = Modifier.width(5.dp))
                         Text(
-                            text = strings.updated(lastUpdated),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = favoriteServer.name,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                     TextButton(
                         onClick = { onToggleFavorite(favoriteServer.id) },
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp),
+                        modifier = Modifier.height(28.dp)
                     ) {
-                        Text(strings.unfollow, style = MaterialTheme.typography.labelMedium)
+                        Text(strings.unfollow, style = MaterialTheme.typography.labelSmall)
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 ServerMetricsDashboard(server = favoriteServer, strings = strings)
             } else {
                 Text(
                     text = if (favoriteServerId == null) strings.followHint else strings.followMissingHint,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -1192,96 +1186,102 @@ private fun ServerCard(
             server.ipLine != null || server.uptimeLine != null
 
     Card(
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         onClick = if (hasDetails) ({ expanded = !expanded }) else ({})
     ) {
-        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
-            // Compact header: name + status + follow in single row
+        Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
+            // Ultra-compact header: name + dot + follow in single line
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        // Online indicator dot
-                        Box(
-                            modifier = Modifier
-                                .size(6.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    if (server.isOnline) Color(0xFF1B8A5A)
-                                    else Color(0xFFB3261E)
-                                )
-                        )
-                        Text(
-                            text = server.name,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(5.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (server.isOnline) Color(0xFF1B8A5A)
+                                else Color(0xFFB3261E)
+                            )
+                    )
+                    Spacer(modifier = Modifier.width(5.dp))
                     Text(
-                        text = server.platformLine,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        text = server.name,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
                 }
-                // Follow button (compact)
                 TextButton(
                     onClick = { onToggleFavorite(server.id) },
-                    modifier = Modifier.height(32.dp),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                    modifier = Modifier.height(28.dp),
+                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
                 ) {
                     Text(
                         text = if (isFavorite) strings.followed else strings.follow,
-                        style = MaterialTheme.typography.labelMedium
+                        style = MaterialTheme.typography.labelSmall
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            // Platform subtitle inline with tags
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 1.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = server.platformLine,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                val tags = listOfNotNull(
+                    server.locationTag,
+                    server.versionTag?.let { strings.agentVersion(it) }
+                )
+                if (tags.isNotEmpty()) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        tags.forEach { TagChip(it) }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
 
             // Metrics dashboard with charts
             ServerMetricsDashboard(server = server, strings = strings)
 
             // Expandable detail section
             if (expanded && hasDetails) {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 server.planLine?.let { CompactInfoLine(strings.plan, it) }
                 server.billingLine?.let { CompactInfoLine(strings.billing, it) }
                 server.ipLine?.let { CompactInfoLine(strings.ip, it) }
                 server.uptimeLine?.let { CompactInfoLine(strings.uptime, it) }
             }
 
-            // Tags row (always visible)
-            val tags = listOfNotNull(
-                server.locationTag,
-                server.versionTag?.let { strings.agentVersion(it) }
-            )
-            if (tags.isNotEmpty() || (hasDetails && !expanded)) {
-                Spacer(modifier = Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    tags.forEach { TagChip(it) }
-                    // Show expand hint if there are hidden details
-                    if (hasDetails && !expanded) {
-                        Text(
-                            text = "...",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+            // Expand hint
+            if (hasDetails && !expanded) {
+                Text(
+                    text = "...",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
             }
         }
     }

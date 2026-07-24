@@ -24,8 +24,10 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.atigger.status.data.ServerUiModel
 import com.atigger.status.i18n.AppStrings
 
@@ -55,211 +57,115 @@ fun chartTrackColor(): Color {
     return if (isSystemInDarkTheme()) DarkTrack else LightTrack
 }
 
-/**
- * Circular ring gauge showing a percentage value.
- * Used for CPU usage visualization.
- */
+/** Ultra-compact CPU ring gauge (36dp, only percent inside, label outside) */
 @Composable
-fun UsageRing(
+fun CpuRing(
     percent: Float,
-    label: String,
     modifier: Modifier = Modifier,
-    size: Dp = 56.dp,
-    strokeWidth: Dp = 5.dp
+    size: Dp = 38.dp,
+    strokeWidth: Dp = 3.dp
 ) {
     val color = usageColor(percent)
     val bgTrack = chartTrackColor()
-    Box(
-        modifier = modifier.size(size),
-        contentAlignment = Alignment.Center
-    ) {
+    Box(modifier = modifier.size(size), contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.size(size)) {
             val stroke = strokeWidth.toPx()
             val arcSize = Size(size.toPx() - stroke, size.toPx() - stroke)
             val topLeft = Offset(stroke / 2f, stroke / 2f)
-
-            // Background track
             drawArc(
-                color = bgTrack,
-                startAngle = 135f,
-                sweepAngle = 270f,
-                useCenter = false,
-                topLeft = topLeft,
-                size = arcSize,
+                color = bgTrack, startAngle = 135f, sweepAngle = 270f,
+                useCenter = false, topLeft = topLeft, size = arcSize,
                 style = Stroke(width = stroke, cap = StrokeCap.Round)
             )
-
-            // Usage arc
             val sweep = (percent.coerceIn(0f, 100f) / 100f) * 270f
             drawArc(
-                color = color,
-                startAngle = 135f,
-                sweepAngle = sweep,
-                useCenter = false,
-                topLeft = topLeft,
-                size = arcSize,
+                color = color, startAngle = 135f, sweepAngle = sweep,
+                useCenter = false, topLeft = topLeft, size = arcSize,
                 style = Stroke(width = stroke, cap = StrokeCap.Round)
             )
         }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = "${percent.toInt()}%",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-/**
- * Compact horizontal progress bar showing usage percentage.
- * Used for memory, disk, and swap visualization.
- */
-@Composable
-fun UsageBar(
-    percent: Float,
-    label: String,
-    modifier: Modifier = Modifier,
-    height: Dp = 8.dp,
-    barColor: Color? = null
-) {
-    val color = barColor ?: usageColor(percent)
-    val bgTrack = chartTrackColor()
-    val clampedPercent = percent.coerceIn(0f, 100f)
-
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
         Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(32.dp)
-        )
-        Spacer(modifier = Modifier.width(6.dp))
-        Box(modifier = Modifier.weight(1f)) {
-            Canvas(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(height)
-            ) {
-                val cornerRadius = height.toPx() / 2f
-                // Background
-                drawRoundRect(
-                    color = bgTrack,
-                    cornerRadius = CornerRadius(cornerRadius, cornerRadius)
-                )
-                // Usage
-                if (clampedPercent > 0f) {
-                    val fillWidth = size.width * (clampedPercent / 100f)
-                    drawRoundRect(
-                        color = color,
-                        size = Size(fillWidth, size.height),
-                        cornerRadius = CornerRadius(cornerRadius, cornerRadius)
-                    )
-                }
-            }
-        }
-        Spacer(modifier = Modifier.width(6.dp))
-        Text(
-            text = "${clampedPercent.toInt()}%",
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = color,
-            modifier = Modifier.width(32.dp),
-            textAlign = TextAlign.End
-        )
-    }
-}
-
-/**
- * Compact network speed indicator with up/down arrows.
- */
-@Composable
-fun NetworkSpeedRow(
-    downSpeed: String?,
-    upSpeed: String?,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        // Download
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = "\u2193",
-                color = NetworkDownBlue,
-                style = MaterialTheme.typography.labelMedium
-            )
-            Spacer(modifier = Modifier.width(2.dp))
-            Text(
-                text = downSpeed ?: "-",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-        // Upload
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = "\u2191",
-                color = NetworkUpGreen,
-                style = MaterialTheme.typography.labelMedium
-            )
-            Spacer(modifier = Modifier.width(2.dp))
-            Text(
-                text = upSpeed ?: "-",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-    }
-}
-
-/**
- * Compact load average display.
- */
-@Composable
-fun LoadIndicator(
-    load1: Double?,
-    load5: Double?,
-    load15: Double?,
-    modifier: Modifier = Modifier
-) {
-    if (load1 == null && load5 == null && load15 == null) return
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = "Load",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = listOfNotNull(
-                load1?.let { String.format("%.1f", it) },
-                load5?.let { String.format("%.1f", it) },
-                load15?.let { String.format("%.1f", it) }
-            ).joinToString("/"),
-            style = MaterialTheme.typography.labelSmall,
+            text = "${percent.toInt()}",
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
         )
     }
 }
 
-/**
- * Combined metrics dashboard for a server card.
- * Shows CPU ring, memory/disk bars, and network speed in a compact layout.
- */
+/** Ultra-compact progress bar: [label%] [====bar====] */
+@Composable
+fun CompactBar(
+    percent: Float,
+    label: String,
+    modifier: Modifier = Modifier,
+    height: Dp = 5.dp,
+    barColor: Color? = null
+) {
+    val color = barColor ?: usageColor(percent)
+    val bgTrack = chartTrackColor()
+    val clamped = percent.coerceIn(0f, 100f)
+
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "$label ${clamped.toInt()}%",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            modifier = Modifier.width(54.dp)
+        )
+        Box(modifier = Modifier.weight(1f).padding(start = 2.dp, end = 2.dp)) {
+            Canvas(
+                modifier = Modifier.fillMaxWidth().height(height)
+            ) {
+                val r = height.toPx() / 2f
+                drawRoundRect(color = bgTrack, cornerRadius = CornerRadius(r, r))
+                if (clamped > 0f) {
+                    drawRoundRect(
+                        color = color,
+                        size = Size(size.width * (clamped / 100f), size.height),
+                        cornerRadius = CornerRadius(r, r)
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** Single-line network + load text, ultra compact */
+@Composable
+fun NetworkLoadLine(
+    downSpeed: String?,
+    upSpeed: String?,
+    load1: Double?,
+    load5: Double?,
+    load15: Double?,
+    modifier: Modifier = Modifier
+) {
+    val parts = buildList {
+        downSpeed?.let { add("\u2193$it") }
+        upSpeed?.let { add("\u2191$it") }
+        val loads = listOfNotNull(load1, load5, load15)
+        if (loads.isNotEmpty()) {
+            add(loads.joinToString("/") { String.format("%.1f", it) })
+        }
+    }
+    if (parts.isEmpty()) return
+
+    Text(
+        text = parts.joinToString("  "),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurface,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier.fillMaxWidth()
+    )
+}
+
+/** Combined metrics: single compact column */
 @Composable
 fun ServerMetricsDashboard(
     server: ServerUiModel,
@@ -268,63 +174,67 @@ fun ServerMetricsDashboard(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+        verticalArrangement = Arrangement.spacedBy(3.dp)
     ) {
-        // Row 1: CPU ring + Network speed
+        // Row 1: CPU ring + RAM bar + DSK bar
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // CPU gauge
             if (server.cpuPercent != null) {
-                UsageRing(
-                    percent = server.cpuPercent,
-                    label = strings.cpu,
-                    size = 52.dp,
-                    strokeWidth = 4.dp
-                )
-                Spacer(modifier = Modifier.width(12.dp))
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.width(44.dp)
+                ) {
+                    CpuRing(percent = server.cpuPercent, size = 36.dp, strokeWidth = 3.dp)
+                    Text(
+                        text = strings.cpu,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 9.sp
+                    )
+                }
             }
 
-            // Memory & Disk bars (stacked vertically next to CPU ring)
+            // RAM + DSK bars stacked
             Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                modifier = Modifier.weight(1f).padding(start = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 if (server.memoryPercent != null) {
-                    UsageBar(
+                    CompactBar(
                         percent = server.memoryPercent,
                         label = "RAM",
-                        height = 7.dp,
+                        height = 5.dp,
                         barColor = MemoryBlue
                     )
                 }
                 if (server.diskPercent != null) {
-                    UsageBar(
+                    CompactBar(
                         percent = server.diskPercent,
                         label = "DSK",
-                        height = 7.dp,
+                        height = 5.dp,
                         barColor = DiskPurple
+                    )
+                }
+                // If no RAM/DSK, show swap if available
+                if (server.memoryPercent == null && server.diskPercent == null && server.swapPercent != null) {
+                    CompactBar(
+                        percent = server.swapPercent,
+                        label = "SWP",
+                        height = 5.dp
                     )
                 }
             }
         }
 
-        // Row 2: Network speed + load
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            NetworkSpeedRow(
-                downSpeed = server.netInSpeedText,
-                upSpeed = server.netOutSpeedText
-            )
-            LoadIndicator(
-                load1 = server.load1,
-                load5 = server.load5,
-                load15 = server.load15
-            )
-        }
+        // Row 2: Network speeds + load in single text line
+        NetworkLoadLine(
+            downSpeed = server.netInSpeedText,
+            upSpeed = server.netOutSpeedText,
+            load1 = server.load1,
+            load5 = server.load5,
+            load15 = server.load15
+        )
     }
 }
